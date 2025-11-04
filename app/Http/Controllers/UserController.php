@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Storage\UserRepository;
+use Illuminate\Database\UniqueConstraintViolationException;
+use App\Services\TotpQrService;
 
 class UserController extends Controller{
 public function __construct(private UserRepository $repo){
@@ -18,8 +20,15 @@ public function __construct(private UserRepository $repo){
     }
 
     public function register(Request $request){
-        $user=User::factory()->make($request->request->all());
-
-        $this -> repo->add($user);
+        try {
+            $user=User::factory()->make($request->request->all());
+            
+            $this -> repo->add($user);
+            $qr=TotpQrService::generateQrCode($user);
+            return View::make('mail', ['qr'=>$qr]);
+        } catch (UniqueConstraintViolationException $e) {
+            return View::make('register', ['message' => 'User email already exits']);
+        }
+        
     }
 }
