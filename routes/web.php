@@ -16,3 +16,6 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->get('/register', 'UserController@showRegister');
+$router->post('/register', 'UserController@register');
