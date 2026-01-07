@@ -32,6 +32,10 @@ class AuthController extends Controller{
         $accessToken=$this->jwtService->createAccessToken($user->id);
         $refreshToken=$this->jwtService->createRefreshToken();
 
+        //spara refreshtoken
+        $this->repo->saveRefreshToken($user->id, $refreshToken);
+
+
         $cookie=Cookie::create(
             'refresh_token',
             $refreshToken,
