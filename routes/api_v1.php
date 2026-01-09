@@ -6,3 +6,4 @@
  */
 
 $router->post('login', 'AuthController@login');
+$router->get('/refresh', 'AuthController@refresh');

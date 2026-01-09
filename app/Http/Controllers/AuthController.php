@@ -7,6 +7,7 @@ use App\Storage\UserRepository;
 use App\Services\totpService;
 use App\Services\jwtService;
 use Symfony\Component\HttpFoundation\Cookie;
+use Carbon\Carbon;
 
 class AuthController extends Controller{
     public function __construct(private UserRepository $repo, private totpService $totpService, private jwtService $jwtService){
@@ -31,15 +32,16 @@ class AuthController extends Controller{
 
         $accessToken=$this->jwtService->createAccessToken($user->id);
         $refreshToken=$this->jwtService->createRefreshToken();
+        $expiresAt = Carbon::now()->addDays(30)->format("Y-m-d H:i:s");
 
         //spara refreshtoken
-        $this->repo->saveRefreshToken($user->id, $refreshToken);
+        $this->repo->saveRefreshToken($user->id, $refreshToken, $expiresAt);
 
 
         $cookie=Cookie::create(
             'refresh_token',
             $refreshToken,
-            60*60*24*30,
+            $expiresAt,
             'refresh',
             null,
             true,
@@ -58,6 +60,52 @@ class AuthController extends Controller{
                 'email'=>$user->email
             ]
         ])->withCookie($cookie);
+       
+    }
+
+    public function refresh(Request $request){
+        $refreshToken=$request->cookie('refresh_token');
+
+        if(!$refreshToken){
+            return response()->json(['error'=>'missing refreshtoken'], 401);
+        }
+
+        $user=$this->repo->getUserByRefreshToken($refreshToken);
+        if(!$user){
+            return response()->json(['error'=>'Invalid refreshtoken (no user)']);
+        }
+
+        //skapa nya tokens för användaren
+        $accessToken=$this->jwtService->createAccessToken($user->id);
+        $newRefreshToken=$this->jwtService->createRefreshToken();
+        $this->repo->saveRefreshToken($user->id, $newRefreshToken);
+        $expiresAt = Carbon::now()->addDays(30)->format("Y-m-d H:i:s");
+
+
+        $cookie=Cookie::create(
+            'refresh_token',
+            $newRefreshToken,
+            $expiresAt,
+            'refresh',
+            null,
+            true,
+            true,
+            false,
+            'lax'
+        );
+
+        return response()->json([
+            'access_token'=>$accessToken,
+            'token_type'=>'Bearer',
+            'expires_in'=>900,
+            'user'=>[
+                'id'=>$user->id,
+                'name'=>$user->name,
+                'email'=>$user->email
+            ]
+        ])->withCookie($cookie);
+
+        
        
     }
 }
