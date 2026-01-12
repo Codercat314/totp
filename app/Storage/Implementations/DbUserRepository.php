@@ -9,6 +9,11 @@ use Carbon\Carbon;
 use App\Models\RefreshToken;
 
 class DbUserRepository implements UserRepository{
+
+    public function __construct() {
+        $this->deleteExpiredTokens();
+    }
+
     public function add(User $user){
         $user->save();
     }
@@ -45,6 +50,16 @@ class DbUserRepository implements UserRepository{
         }
 
         return User::find($record->user_id);
+    }
+
+    private function deleteExpiredTokens(){
+        RefreshToken::where('expires', '<', date('Y-m-d H:i:s'))->delete();
+    }
+
+    public function deleteRefreshToken(string $refreshToken){
+        $hash = hash('sha256', $refreshToken);
+
+        RefreshToken::where('token_hash', $hash)->delete();
     }
 }
 

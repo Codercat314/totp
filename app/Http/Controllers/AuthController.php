@@ -108,4 +108,29 @@ class AuthController extends Controller{
         
        
     }
+    public function logout(Request $request){
+        $refreshToken = $request->cookie('refresh_token');
+
+        if ($refreshToken) {
+            $this->repo->deleteRefreshToken($refreshToken);
+        }
+
+        $cookie=Cookie::create(
+            'refresh_token',
+            null,
+            -1,
+            'refresh',
+            null,
+            true,
+            true,
+            false,
+            'lax'
+        );
+
+        //Retunera ett ogiltigt accesstoken
+        return response()->json([
+            'access_token'=>null,
+            'expires'=>-1
+        ], 204)->withoutCookie($cookie);
+    }
 }
