@@ -14,4 +14,6 @@ interface UserRepository {
     public function getUserByRefreshToken(string $refreshToken):?User;
 
     public function deleteRefreshToken(string $refreshToken);
+
+    public function deleteAllRefreshToken(User $user);
 }

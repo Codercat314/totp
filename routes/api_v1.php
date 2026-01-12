@@ -8,3 +8,4 @@
 $router->post('login', 'AuthController@login');
 $router->get('/refresh', 'AuthController@refresh');
 $router->delete('/refresh', 'AuthController@logout');
+$router->delete('/refresh/all', 'AuthController@logoutAll');
