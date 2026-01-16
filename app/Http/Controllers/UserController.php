@@ -25,7 +25,18 @@ public function __construct(private UserRepository $repo){
             
             $this -> repo->add($user);
             $qr=TotpQrService::generateQrCode($user);
-            return View::make('mail', ['qr'=>$qr]);
+            $content = View::make('mail', ['qr'=>$qr]);
+        /*
+        kräver tillgång till en mailserver :(
+            mail(
+                $user->email,
+                'Grattis till registreringen',
+                $content,
+                'MIME-version:1.0; Content-Type:text/html; charset=UTF-8'
+            );
+            */
+            return $content;
+
         } catch (UniqueConstraintViolationException $e) {
             return View::make('register', ['message' => 'User email already exits']);
         }
